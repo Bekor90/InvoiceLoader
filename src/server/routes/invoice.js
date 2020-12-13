@@ -11,7 +11,7 @@ const logger = winston.createLogger({
 });
 
 //get data by filters
-router.post('/invoice', function (req, res) {
+router.post('/invoice/filters', function (req, res) {
 
    let body = req.body;
    let selectDateIni;
@@ -25,19 +25,21 @@ router.post('/invoice', function (req, res) {
    let invoice={};
     arrayData = fs.readDataFile();
     arrayData.pop();
-   //validate filters date and invoiceNumber
-   if( (body.dateIni.length === 10) && (body.dateFin.length === 10)){
-     selectDateIni = new Date(body.dateIni.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3"));
-     selectDateFin = new Date(body.dateFin.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3"));
-     banderaDate = true;
-    }
-   if(body.invoiceNumber.length > 0){
-     selectInvoiceNumber = body.invoiceNumber;
-     banderaInvoice = true;
-   } 
+
+ //validate if filters arrive
+  if(body != 'undefined' && body != null && Object.keys(body).length > 0){
+      //format filters date
+      if( (body.dateIni.length === 10) && (body.dateFin.length === 10)){
+        selectDateIni = new Date(body.dateIni.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3"));
+        selectDateFin = new Date(body.dateFin.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3"));
+        banderaDate = true;
+        }
+      if(body.invoiceNumber.length > 0){
+        selectInvoiceNumber = body.invoiceNumber;
+        banderaInvoice = true;
+      } 
 
    //read data file
-  if(banderaInvoice === true || banderaDate === true){
     if(arrayData.length > 0){
         arrayData.map((data) => {
 
@@ -91,29 +93,29 @@ router.post('/invoice', function (req, res) {
             data: arrayResult
         });
     }else{
-      arrayData.map((data) => {
-        let lineData = data.split("|"); //get fields of line
-        invoice ={
-          id: lineData[0],
-          date: lineData[1],
-          InvoiceNumber: lineData[2],
-          Net: lineData[3],
-          Tax: lineData[4],
-          Total: lineData[5]
-        }
-        arrayResult.push(invoice);
-      });
-
       res.json({
         ok: true,
         data: arrayResult
       });
     }
   }else{
-      res.json({
-          ok: true,
-          data: arrayResult
-      });
+    arrayData.map((data) => {
+      let lineData = data.split("|"); //get fields of line
+      invoice ={
+        id: lineData[0],
+        date: lineData[1],
+        InvoiceNumber: lineData[2],
+        Net: lineData[3],
+        Tax: lineData[4],
+        Total: lineData[5]
+      }
+      arrayResult.push(invoice);
+    });
+
+    res.json({
+      ok: true,
+      data: arrayResult
+    });
   }
 });
 
@@ -158,43 +160,53 @@ router.post('/invoice', function (req, res) {
     }
 });
 
-router.delete('/invoice/:id', function (req, res){
+router.delete('/invoice', function (req, res){
+
+    fs.overwriteDataFile(''); //clean file data
+    res.json({
+      ok: true,
+      data: result
+    });
+});
+
+//delete by id
+router.delete('/invoiceBy/:id', function (req, res){
         
-    let idInvoice = req.params.id;
-    let arrayData =[];
-    let result =[];
-    let exist =false;
-    arrayData = fs.readDataFile();
+  let idInvoice = req.params.id;
+  let arrayData =[];
+  let result =[];
+  let exist =false;
+  arrayData = fs.readDataFile();
 
-    if(arrayData.length > 0){
+  if(arrayData.length > 0){
 
-      arrayData.pop();          //remove last position from array
-      fs.overwriteDataFile(''); //clean file data
+    arrayData.pop();          //remove last position from array
+    fs.overwriteDataFile(''); //clean file data
 
-      arrayData.map((data) => {
+    arrayData.map((data) => {
 
-      let lineData = data.split("|"); //get fields of line
+    let lineData = data.split("|"); //get fields of line
 
-        if(idInvoice != lineData[0].trim()){
-          fs.saveDataFile(`${data},`);        //save new data file
-          result.push(data);
-        }else if(idInvoice === lineData[0].trim()){
-          exist = true;
-        }
-      });
-
-      if(!exist){
-        res.json({
-          ok: true,
-          data: result
-        });
-      }else{
-        res.json({
-          ok: false,
-          data: 'not data'
-        });
+      if(idInvoice != lineData[0].trim()){
+        fs.saveDataFile(`${data},`);        //save new data file
+        result.push(data);
+      }else if(idInvoice === lineData[0].trim()){
+        exist = true;
       }
+    });
+
+    if(!exist){
+      res.json({
+        ok: true,
+        data: result
+      });
+    }else{
+      res.json({
+        ok: false,
+        data: 'not data'
+      });
     }
+  }
 });
 
 module.exports = router;
