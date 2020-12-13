@@ -5,9 +5,10 @@ router = express.Router();
 
 
 
-router.get('/weather', function (req, res) {
-    const lat = '3.43722';
-    const lng = '-76.5225';
+router.get('/weather/:lat/:lon', function (req, res) {
+
+    const lat = req.params.lat;
+    const lng = req.params.lon;
   
     let getInfo = async() => {
         try {

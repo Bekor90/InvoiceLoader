@@ -10,7 +10,8 @@ const logger = winston.createLogger({
     ]
 });
 
-router.get('/invoice', function (req, res) {
+//get data by filters
+router.post('/invoice', function (req, res) {
 
    let body = req.body;
    let selectDateIni;
@@ -20,6 +21,10 @@ router.get('/invoice', function (req, res) {
    let banderaInvoice=false;
    let arrayResult= [];
 
+   let arrayData =[];
+   let invoice={};
+    arrayData = fs.readDataFile();
+    arrayData.pop();
    //validate filters date and invoiceNumber
    if( (body.dateIni.length === 10) && (body.dateFin.length === 10)){
      selectDateIni = new Date(body.dateIni.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3"));
@@ -33,11 +38,6 @@ router.get('/invoice', function (req, res) {
 
    //read data file
   if(banderaInvoice === true || banderaDate === true){
-   let cadena = '';
-   let arrayData =[];
-   let invoice={};
-    arrayData = fs.readDataFile();
-    arrayData.pop();
     if(arrayData.length > 0){
         arrayData.map((data) => {
 
@@ -91,6 +91,19 @@ router.get('/invoice', function (req, res) {
             data: arrayResult
         });
     }else{
+      arrayData.map((data) => {
+        let lineData = data.split("|"); //get fields of line
+        invoice ={
+          id: lineData[0],
+          date: lineData[1],
+          InvoiceNumber: lineData[2],
+          Net: lineData[3],
+          Tax: lineData[4],
+          Total: lineData[5]
+        }
+        arrayResult.push(invoice);
+      });
+
       res.json({
         ok: true,
         data: arrayResult
@@ -108,13 +121,14 @@ router.post('/invoice', function (req, res) {
     let body = req.body;
     let strData ='';
     if(body.data.length > 0){
+
         let arrayData =[];
         arrayData = fs.readDataFile();
+        let secuence = arrayData.length; //get secuence of file
 
-        let secuence = arrayData.length; //get secuence
         body.data.map((data) => {
             try{
-                strData +=  `${secuence} | ${new Date().toLocaleDateString() }| ${data.invoiceNumber} | ${data.Net} | ${data.tax} | ${data.Total},`;
+                strData +=  `${secuence} | ${new Date().toLocaleDateString() }| ${data.invoiceNumber} | ${data.net} | ${data.tax} | ${data.total},`;
                 secuence += 1;
             }catch (error) {
                 logger.info('error process data request /invoice');
