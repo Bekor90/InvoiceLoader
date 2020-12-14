@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha",
     "start:dev": "nodemon ",
-    "start": "node "
+    "start": "node index.js"
   },
   "author": "John Anderson Garcia Vanegas",
   "license": "ISC",
