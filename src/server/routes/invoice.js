@@ -51,10 +51,10 @@ router.post('/invoice/filters', function (req, res) {
             
             if(banderaInvoice === true && banderaDate === true){ //validate date and invoiceNumber
               //filter data by date and InvoiceNumber
-                if((moment(selectDateIni).add(1, 'days').isSameOrBefore(DateInvoice, 'day') &&
+                if((moment(selectDateIni).isSameOrBefore(DateInvoice, 'day') &&
                 moment(selectDateIni).isSameOrBefore(DateInvoice, 'months') && 
                 moment(selectDateIni).isSameOrBefore(DateInvoice, 'year') ) && 
-               (moment(DateInvoice).add(1, 'days').isSameOrAfter(selectDateFin, 'day') &&
+               (moment(DateInvoice).isSameOrAfter(selectDateFin, 'day') &&
                 moment(DateInvoice).isSameOrAfter(selectDateFin, 'months') && 
                 moment(DateInvoice).isSameOrAfter(selectDateFin, 'year') ) && 
                 lineData[2].trim().indexOf(selectInvoiceNumber) != -1) {
@@ -70,10 +70,10 @@ router.post('/invoice/filters', function (req, res) {
                 }
             //filter data by date
             }else if(banderaDate === true && banderaInvoice ===false){  //validate date
-                if((moment(selectDateFin).add(1, 'days').isSameOrAfter(DateInvoice, 'day') &&
+                if((moment(selectDateFin).isSameOrAfter(DateInvoice, 'day') &&
                     moment(selectDateFin).isSameOrAfter(DateInvoice, 'months') && 
                     moment(selectDateFin).isSameOrAfter(DateInvoice, 'year')) &&
-                    (moment(selectDateIni).add(1, 'days').isSameOrBefore(DateInvoice, 'day') &&
+                    (moment(selectDateIni).isSameOrBefore(DateInvoice, 'day') &&
                     moment(selectDateIni).isSameOrBefore(DateInvoice, 'months') && 
                     moment(selectDateIni).isSameOrBefore(DateInvoice, 'year') ) ){
                     invoice ={
