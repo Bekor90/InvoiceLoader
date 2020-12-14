@@ -1,5 +1,6 @@
 const express = require('express');
 const winston = require('winston');
+const moment = require('moment');
 const fs = require('../services/utilsFile.js');
 
 router = express.Router();
@@ -26,15 +27,17 @@ router.post('/invoice/filters', function (req, res) {
     arrayData = fs.readDataFile();
     arrayData.pop();
 
+    console.log(body);
+
  //validate if filters arrive
   if(body != 'undefined' && body != null && Object.keys(body).length > 0){
       //format filters date
       if( (body.dateIni.length === 10) && (body.dateFin.length === 10)){
-        selectDateIni = new Date(body.dateIni.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3"));
-        selectDateFin = new Date(body.dateFin.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3"));
+        selectDateIni = new Date(body.dateIni);
+        selectDateFin = new Date(body.dateFin);
         banderaDate = true;
         }
-      if(body.invoiceNumber.length > 0){
+      if(body.invoiceNumber != 'undefined' && body.invoiceNumber.length > 0){
         selectInvoiceNumber = body.invoiceNumber;
         banderaInvoice = true;
       } 
@@ -44,12 +47,17 @@ router.post('/invoice/filters', function (req, res) {
         arrayData.map((data) => {
 
             let lineData = data.split("|"); //get fields of line
-            let DateInvoice = new Date(lineData[1].replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3"));
+            let DateInvoice = new Date(lineData[1]);
             
             if(banderaInvoice === true && banderaDate === true){ //validate date and invoiceNumber
-               
               //filter data by date and InvoiceNumber
-                if(DateInvoice >= selectDateIni && DateInvoice <= selectDateFin && selectInvoiceNumber === lineData[2].trim()){
+                if((moment(selectDateIni).add(1, 'days').isSameOrBefore(DateInvoice, 'day') &&
+                moment(selectDateIni).add(1, 'days').isSameOrBefore(DateInvoice, 'months') && 
+                moment(selectDateIni).add(1, 'days').isSameOrBefore(DateInvoice, 'year') ) && 
+               (moment(DateInvoice).add(1, 'days').isSameOrAfter(selectDateFin, 'day') &&
+                moment(DateInvoice).add(1, 'days').isSameOrAfter(selectDateFin, 'months') && 
+                moment(DateInvoice).add(1, 'days').isSameOrAfter(selectDateFin, 'year') ) && 
+                lineData[2].trim().indexOf(selectInvoiceNumber) != -1) {
                     invoice ={
                         id: lineData[0],
                         date: lineData[1],
@@ -62,7 +70,15 @@ router.post('/invoice/filters', function (req, res) {
                 }
             //filter data by date
             }else if(banderaDate === true && banderaInvoice ===false){  //validate date
-                if(DateInvoice >= selectDateIni && DateInvoice <= selectDateFin){
+                if((moment(selectDateIni).add(1, 'days').isSameOrAfter(DateInvoice, 'day') &&
+                    moment(selectDateIni).add(1, 'days').isSameOrAfter(DateInvoice, 'months') && 
+                    moment(selectDateIni).add(1, 'days').isSameOrAfter(DateInvoice, 'year')) &&
+                    (moment(selectDateFin).add(1, 'days').isSameOrBefore(DateInvoice, 'day') &&
+                    moment(selectDateFin).add(1, 'days').isSameOrBefore(DateInvoice, 'months') && 
+                    moment(selectDateFin).add(1, 'days').isSameOrBefore(DateInvoice, 'year') ) ){
+                      console.log('entre date fin: ', selectDateIni);
+                      console.log('entre date fin: ', selectDateFin);
+                      console.log('entre date fin: ', DateInvoice);
                     invoice ={
                         id: lineData[0],
                         date: lineData[1],
@@ -75,7 +91,7 @@ router.post('/invoice/filters', function (req, res) {
                 }
             //filter data by InvoiceNumber
             } else if(banderaInvoice === true && banderaDate ===false){  //validate date
-              if(selectInvoiceNumber === lineData[2].trim()){
+              if(lineData[2].trim().indexOf(selectInvoiceNumber) != -1){
                   invoice ={
                       id: lineData[0],
                       date: lineData[1],
@@ -119,6 +135,7 @@ router.post('/invoice/filters', function (req, res) {
   }
 });
 
+//save data
 router.post('/invoice', function (req, res) {
     let body = req.body;
     let strData ='';
@@ -130,7 +147,8 @@ router.post('/invoice', function (req, res) {
 
         body.data.map((data) => {
             try{
-                strData +=  `${secuence} | ${new Date().toLocaleDateString() }| ${data.invoiceNumber} | ${data.net} | ${data.tax} | ${data.total},`;
+              let dateFormat = moment(new Date()).format("YYYY-MM-DD");
+                strData +=  `${secuence} | ${dateFormat}| ${data.invoiceNumber} | ${data.net} | ${data.tax} | ${data.total},`;
                 secuence += 1;
             }catch (error) {
                 logger.info('error process data request /invoice');
@@ -160,12 +178,13 @@ router.post('/invoice', function (req, res) {
     }
 });
 
+//delete all data
 router.delete('/invoice', function (req, res){
 
     fs.overwriteDataFile(''); //clean file data
     res.json({
       ok: true,
-      data: result
+      data: 'Data delete'
     });
 });
 
